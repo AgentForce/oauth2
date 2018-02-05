@@ -1,0 +1,27 @@
+{
+  "name": "complete-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "OAuth2",
+    "Node",
+    "Koa",
+    "Koa2"
+  ],
+  "author": "waychan23@hotmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "consolidate": "^0.14.5",
+    "koa": "^2.3.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.2.1",
+    "koa-session": "^5.5.0",
+    "lodash": "^4.17.4",
+    "redis": "^2.8.0",
+    "request": "^2.81.0"
+  }
+}
