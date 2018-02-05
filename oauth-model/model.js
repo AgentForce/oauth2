@@ -10,8 +10,10 @@
 // bluebird.promisifyAll(redis.RedisClient.prototype);
 var bluebird = require('bluebird');
 var redis = bluebird.promisifyAll(require('redis'));
+ 
+const redisurl = 'redis://:ManuliFe@13.250.129.169:6379';
 //var db = redis.createClient(_options.redisUrl);
-var db = redis.createClient();
+var db = redis.createClient(redisurl);
 var fmt = require('util').format;
 
 //DB
@@ -34,7 +36,8 @@ const initOptions = {
 const pgp = require('pg-promise')(initOptions);
 
 // using an invalid connection string:
-const pg = pgp('postgres://oauth2:oauth2@localhost:5432/oauth2');
+//const pg = pgp('postgres://oauth2:oauth2@localhost:5432/oauth2');
+const pg = pgp('postgres://oauth2:oauth2MNL@13.250.129.169:5432/oauth2');
 
 pg.connect()
 	.then(obj => {
