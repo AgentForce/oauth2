@@ -66,11 +66,13 @@ var formats = {
  */
 
 
-module.exports.getAccessToken = function* (bearerToken) {
+module.exports.getAccessToken = function* (bearerToken, callback) {
 	console.log('getAccessToken')
 
 	//var token = yield db.hgetall(fmt(formats.token, bearerToken));
 	var token = yield promise_getToken(bearerToken);
+	// console.log(token);
+	
 	if (token.accessToken)
 		return token;
 	else return;

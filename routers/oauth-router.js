@@ -30,16 +30,17 @@ function getOauthRouter(app, options={}){
 	//oauthRouter.get('/authorise', app.oauth.authenticate())
 	
 	oauthRouter.post('/authorise/*', app.oauth.authenticate({ scope: 'user_info:read' }));
+
 	//error handler
 	oauthRouter.all('/*', async (ctx, next) => {
 		var oauthState = ctx.state.oauth || {};
-
+		// console.log("Vao")
+		// console.log(oauthState);
         if(oauthState.error){
             //handle the error thrown by the oauth.authenticate middleware here
             ctx.throw(oauthState.error);
             return;
         }
-
 		await next();
 	});
 
@@ -54,9 +55,17 @@ function getOauthRouter(app, options={}){
     });
 
 	oauthRouter.post('/authorise/check', async (ctx, next) => {
-        let  hobbies = ctx.request.body;
+		// console.log("=========");
+		var oauthState = ctx.state.oauth || {};
+		// console.log(oauthState.token.user);
+		let  hobbies = ctx.request.body;
+		const objUser = JSON.parse(oauthState.token.user);
+		// console.log(typeof objUser);
+		delete objUser.password;
+		delete objUser.scope;
+		delete objUser.resource_ids;
 		let res = {
-			infor : { id : 2, username: 'abc2'},
+			infor : objUser,
 			log: 'id234',
 			level: 23
 
