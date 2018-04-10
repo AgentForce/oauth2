@@ -1,6 +1,7 @@
 const oauthServer = require('koa2-oauth-server');
 const router = require('koa-router');
 const oauthModel = require('../oauth-model/model');
+const _ = require('lodash');
 
 module.exports = getOauthRouter;
 
@@ -34,8 +35,6 @@ function getOauthRouter(app, options={}){
 	//error handler
 	oauthRouter.all('/*', async (ctx, next) => {
 		var oauthState = ctx.state.oauth || {};
-		// console.log("Vao")
-		// console.log(oauthState);
         if(oauthState.error){
             //handle the error thrown by the oauth.authenticate middleware here
             ctx.throw(oauthState.error);
@@ -55,26 +54,33 @@ function getOauthRouter(app, options={}){
     });
 
 	oauthRouter.post('/authorise/check', async (ctx, next) => {
-		// console.log("=========");
+		var name_api = ctx.request.body.name_api;
 		var oauthState = ctx.state.oauth || {};
-		// console.log(oauthState.token.user);
-		let  hobbies = ctx.request.body;
-		const objUser = JSON.parse(oauthState.token.user);
-		// console.log(typeof objUser);
-		delete objUser.password;
-		delete objUser.scope;
-		delete objUser.resource_ids;
-		let res = {
-			infor : objUser,
-			log: 'id234',
-			level: 23
+		let index = _.findIndex(JSON.parse(oauthState.token.scope), function(o) { return o.scope == name_api; });
+		if(index >= 0){
+			let  hobbies = ctx.request.body;
+			const objUser = JSON.parse(oauthState.token.user);
+			delete objUser.password;
+			delete objUser.scope;
+			delete objUser.resource_ids;
+			let res = {
+				infor : objUser,
+				level: 23
 
+			}
+			
+			ctx.body = {
+				'success': true,
+				'result' : res
+			};
+		} else {
+			ctx.body = {
+				'success': false,
+				'result' : [],
+				'msg': name_api + " not found"
+			};
 		}
-         
-        ctx.body = {
-			'success': true,
-			'result' : res
-        };
+		
     });
 
 
