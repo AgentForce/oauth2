@@ -81,19 +81,21 @@ function promise_getToken(bearerToken) {
 	});
 }
 module.exports.verifyScope = function* (accessToken, scope) {
-	console.log('verifyScope');
+	// console.log('verifyScope');
 	return true;
 };
 
 module.exports.validateScope = function* (user, client, scope) { 
-	console.log('validateScope===============');
+	// console.log('validateScope===============');
 	if (_.intersectionBy(user.resource_ids.split(','), client.resource_ids).length > 0) {
 		//Check scope
 		let scope_common = _.intersectionWith(user.scope.split(','), client.scopes.split(','),  _.isEqual);
+		// console.log(scope_common);
+		// console.log("++++")
 		if (scope_common.length > 0) {
 			// Get Scope from Role
-			let where = "ROLE_FA";
-			return pg.query('SELECT scope FROM oauth_role_scopes WHERE role IN ( $1 )', [where])
+			// let where = "ROLE_FA";
+			return pg.query('SELECT scope FROM oauth_role_scopes WHERE role IN ( $1 )', scope_common)
 				.then(function (result) {
 					if (result) {
 						return JSON.stringify(result);
@@ -114,7 +116,7 @@ module.exports.validateScope = function* (user, client, scope) {
  */
 
 module.exports.getClient = function* (clientId, clientSecret) {
-	console.log('getClient');
+	// console.log('getClient');
 
 	return pg.query('SELECT * FROM oauth_clients WHERE client_id = $1 AND client_secret = $2', [clientId, clientSecret])
 		.then(function (result) {
@@ -143,7 +145,7 @@ module.exports.getClient = function* (clientId, clientSecret) {
  */
 
 module.exports.getRefreshToken = function* (refreshToken) {
-	console.log('getRefreshToken')
+	// console.log('getRefreshToken')
 
 	//var token = db.hgetall('tokens:fc63d292295def45cde9492cbda650636c774b67');
 	var token = yield promise_getToken(refreshToken);
@@ -165,7 +167,7 @@ module.exports.getRefreshToken = function* (refreshToken) {
  */
 
 module.exports.getUser = function* (username, password) {
-	console.log('getUser')
+	// console.log('getUser')
 
 	return pg.query('SELECT * FROM oauth_users WHERE username = $1 AND password = $2', [username, password])
 		.then(function (result) {
@@ -181,7 +183,7 @@ module.exports.getUser = function* (username, password) {
 
 
 module.exports.getUserFromClient = function* (client) {
-	console.log('getUserFromClient')
+	// console.log('getUserFromClient')
 	return pg.query('SELECT * FROM oauth_users WHERE id = $1 ', [client.user_id])
 		.then(function (result) {
 			console.log(result[0]);
@@ -197,7 +199,7 @@ module.exports.getUserFromClient = function* (client) {
 
 
 module.exports.revokeToken = function* (token) {
-	console.log('revokeToken');
+	// console.log('revokeToken');
 	//Delete refresh token in redis
 	db.del(fmt(formats.token, token.accessToken));
 	db.del(fmt(formats.token, token.refreshToken));
@@ -209,7 +211,7 @@ module.exports.revokeToken = function* (token) {
  */
 
 module.exports.saveToken = function* (token, client, user) {
-	console.log('saveToken')
+	// console.log('saveToken')
 	//token.scope = 'write';
 	var data = {
 		accessToken: token.accessToken,
