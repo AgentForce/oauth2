@@ -9,6 +9,9 @@ var redis = bluebird.promisifyAll(require('redis'));
 const redisurl = 'redis://:ManuliFe@13.250.129.169:6379';
 var db = redis.createClient(redisurl);
 var fmt = require('util').format;
+const bcrypt = require("bcrypt-nodejs");
+// const crypto = require("crypto");
+const dateFormat = require('dateformat');
 
 //DB
 
@@ -86,7 +89,7 @@ module.exports.verifyScope = function* (accessToken, scope) {
 };
 
 module.exports.validateScope = function* (user, client, scope) { 
-	// console.log('validateScope===============');
+	console.log('validateScope===============');
 	if (_.intersectionBy(user.resource_ids.split(','), client.resource_ids).length > 0) {
 		//Check scope
 		let scope_common = _.intersectionWith(user.scope.split(','), client.scopes.split(','),  _.isEqual);
@@ -167,18 +170,20 @@ module.exports.getRefreshToken = function* (refreshToken) {
  */
 
 module.exports.getUser = function* (username, password) {
-	// console.log('getUser')
+	console.log('getUser')
 
-	return pg.query('SELECT * FROM oauth_users WHERE username = $1 AND password = $2', [username, password])
+	return pg.query('SELECT * FROM oauth_users WHERE username = $1', [username])
 		.then(function (result) {
-			console.log(result[0]);
-			return result[0] ? result[0] : false;
+			
+			// Xử lý password
+			// console.log(result[0]);
+			if(result[0]){
+				console.log('vao' + result[0].salt);
+				const res_checkPass = checkPass(result[0], password);
+				console.log(res_checkPass);
+				return res_checkPass;
+			} else { console.log('abc'); return false; 	}	
 		});
-
-	return {
-		id: user.username
-	};
-	 
 };
 
 
@@ -231,7 +236,8 @@ module.exports.saveToken = function* (token, client, user) {
 	db.expire(fmt(formats.token, token.refreshToken), client.refreshTokenLifetime);
 	//Save token db
 	yield pro_saveTokenPg(token, client, user);
-
+	yield pro_saveReportPg(token, user);
+	// Save table report
 	return data;
 };
 
@@ -252,5 +258,58 @@ function pro_saveTokenPg(token, client, user) {
 			resolve(result)
 			//Insert refresh token
 		});
+		 
+	});
+}
+
+function checkPass(user, password){
+	return new bluebird(function (resolve, reject) {
+		bcrypt.hash(password, user.salt, undefined, (err, hash) => {
+			console.log("vvvvv");
+			if (err) { console.log('abddc'); resolve(false);}
+			else{
+				resolve(user);
+				console.log(hash);
+				if(hash === user.password){
+					resolve(user);
+				}else resolve(false);
+			}
+			
+				
+		});
+	});
+}
+function pro_saveReportPg(token, user) {
+	return new bluebird(function (resolve, reject) {
+		let today = dateFormat(new Date(), "yyyy-mm-dd h:MM:ss");
+
+
+		pg.query('SELECT * FROM oauth_monitor_login WHERE user_id = $1 ', [user.id])
+		.then(function (result) {
+			if(result[0]){
+				//Update
+				pg.query("UPDATE oauth_monitor_login SET date = '" + today + "' WHERE user_id = " + user.id).then(function (err, result) {
+					if (!err) reject(err);
+					resolve(result)
+					//Insert refresh token
+				});
+			}else{ //Insert
+				pg.query('INSERT INTO oauth_monitor_login(user_id, username,fullname, report_to_username, report_to, report_to_list, token, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', [
+					user.id,
+					user.username,
+					user.fullName,
+					user.report_to_username,
+					user.report_to,
+					user.report_to_list,
+					token.accessToken,
+					today
+				]).then(function (err, result) {
+					if (!err) reject(err);
+					resolve(result)
+					//Insert refresh token
+				});
+			}
+		});
+		
 	});
 }

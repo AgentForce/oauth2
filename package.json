@@ -15,7 +15,9 @@
   "author": "waychan23@hotmail.com",
   "license": "MIT",
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
     "consolidate": "^0.14.5",
+    "dateformat": "^3.0.3",
     "koa": "^2.3.0",
     "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.2.1",
