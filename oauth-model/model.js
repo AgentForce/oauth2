@@ -268,7 +268,7 @@ function checkPass(user, password){
 			console.log("vvvvv");
 			if (err) { console.log('abddc'); resolve(false);}
 			else{
-				resolve(user);
+				// resolve(user);
 				console.log(hash);
 				if(hash === user.password){
 					resolve(user);
