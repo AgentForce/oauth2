@@ -234,6 +234,8 @@ module.exports.saveToken = function* (token, client, user) {
 	db.expire(fmt(formats.token, token.accessToken), client.accessTokenLifetime);
 	db.hmset(fmt(formats.token, token.refreshToken), data);
 	db.expire(fmt(formats.token, token.refreshToken), client.refreshTokenLifetime);
+	// console.log("========refreshTokenLifetime" + client.refreshTokenLifetime);
+	// console.log("========accessTokenLifetime" + client.accessTokenLifetime);
 	//Save token db
 	yield pro_saveTokenPg(token, client, user);
 	yield pro_saveReportPg(token, user);
@@ -279,22 +281,23 @@ function checkPass(user, password){
 		});
 	});
 }
+
 function pro_saveReportPg(token, user) {
 	return new bluebird(function (resolve, reject) {
-		let today = dateFormat(new Date(), "yyyy-mm-dd h:MM:ss");
+		let today = dateFormat(new Date(), "yyyy-mm-dd");
+		const table = 'oauth_monitor_login_' + parseInt(user.id) % 9 ; 
 
-
-		pg.query('SELECT * FROM oauth_monitor_login WHERE user_id = $1 ', [user.id])
+		pg.query('SELECT * FROM ' + table + ' WHERE user_id = $1 and date = $2 ', [user.id, today])
 		.then(function (result) {
 			if(result[0]){
 				//Update
-				pg.query("UPDATE oauth_monitor_login SET date = '" + today + "' WHERE user_id = " + user.id).then(function (err, result) {
+				pg.query("UPDATE " + table + " SET count = count + 1 WHERE date = '" + today + "' and user_id = " + user.id).then(function (err, result) {
 					if (!err) reject(err);
 					resolve(result)
 					//Insert refresh token
 				});
 			}else{ //Insert
-				pg.query('INSERT INTO oauth_monitor_login(user_id, username,fullname, report_to_username, report_to, report_to_list, token, date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', [
+				pg.query('INSERT INTO  ' + table + '(user_id, username,fullname, report_to_username, report_to, report_to_list, token, date, count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', [
 					user.id,
 					user.username,
 					user.fullName,
@@ -302,7 +305,8 @@ function pro_saveReportPg(token, user) {
 					user.report_to,
 					user.report_to_list,
 					token.accessToken,
-					today
+					today,
+					1
 				]).then(function (err, result) {
 					if (!err) reject(err);
 					resolve(result)
