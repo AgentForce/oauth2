@@ -285,8 +285,8 @@ function checkPass(user, password){
 function pro_saveReportPg(token, user) {
 	return new bluebird(function (resolve, reject) {
 		let today = dateFormat(new Date(), "yyyy-mm-dd");
-		const table = 'oauth_monitor_login_' + parseInt(user.id) % 9 ; 
-
+		// const table = 'oauth_monitor_login_' + parseInt(user.id) % 9 ; 
+		const table = 'oauth_monitor_login';
 		pg.query('SELECT * FROM ' + table + ' WHERE user_id = $1 and date = $2 ', [user.id, today])
 		.then(function (result) {
 			if(result[0]){
