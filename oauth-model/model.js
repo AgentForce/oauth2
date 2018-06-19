@@ -89,12 +89,10 @@ module.exports.verifyScope = function* (accessToken, scope) {
 };
 
 module.exports.validateScope = function* (user, client, scope) { 
-	console.log('validateScope===============');
 	if (_.intersectionBy(user.resource_ids.split(','), client.resource_ids).length > 0) {
 		//Check scope
 		let scope_common = _.intersectionWith(user.scope.split(','), client.scopes.split(','),  _.isEqual);
-		// console.log(scope_common);
-		// console.log("++++")
+		
 		if (scope_common.length > 0) {
 			// Get Scope from Role
 			// let where = "ROLE_FA";
@@ -119,7 +117,6 @@ module.exports.validateScope = function* (user, client, scope) {
  */
 
 module.exports.getClient = function* (clientId, clientSecret) {
-	// console.log('getClient');
 
 	return pg.query('SELECT * FROM oauth_clients WHERE client_id = $1 AND client_secret = $2', [clientId, clientSecret])
 		.then(function (result) {
@@ -148,7 +145,6 @@ module.exports.getClient = function* (clientId, clientSecret) {
  */
 
 module.exports.getRefreshToken = function* (refreshToken) {
-	// console.log('getRefreshToken')
 
 	//var token = db.hgetall('tokens:fc63d292295def45cde9492cbda650636c774b67');
 	var token = yield promise_getToken(refreshToken);
@@ -159,6 +155,7 @@ module.exports.getRefreshToken = function* (refreshToken) {
 			refreshToken: token.refreshToken,
 			user: JSON.parse(token.user),
 			client: JSON.parse(token.client),
+			scope: token.scope,
 		};
 	else return;
 
@@ -170,17 +167,13 @@ module.exports.getRefreshToken = function* (refreshToken) {
  */
 
 module.exports.getUser = function* (username, password) {
-	console.log('getUser')
 
 	return pg.query('SELECT * FROM oauth_users WHERE username = $1', [username])
 		.then(function (result) {
 			
 			// Xử lý password
-			// console.log(result[0]);
 			if(result[0]){
-				console.log('vao' + result[0].salt);
 				const res_checkPass = checkPass(result[0], password);
-				console.log(res_checkPass);
 				return res_checkPass;
 			} else { console.log('abc'); return false; 	}	
 		});
@@ -188,10 +181,8 @@ module.exports.getUser = function* (username, password) {
 
 
 module.exports.getUserFromClient = function* (client) {
-	// console.log('getUserFromClient')
 	return pg.query('SELECT * FROM oauth_users WHERE id = $1 ', [client.user_id])
 		.then(function (result) {
-			console.log(result[0]);
 			return result[0] ? result[0] : false;
 		});
 
@@ -204,7 +195,6 @@ module.exports.getUserFromClient = function* (client) {
 
 
 module.exports.revokeToken = function* (token) {
-	// console.log('revokeToken');
 	//Delete refresh token in redis
 	db.del(fmt(formats.token, token.accessToken));
 	db.del(fmt(formats.token, token.refreshToken));
@@ -216,7 +206,6 @@ module.exports.revokeToken = function* (token) {
  */
 
 module.exports.saveToken = function* (token, client, user) {
-	// console.log('saveToken')
 	//token.scope = 'write';
 	var data = {
 		accessToken: token.accessToken,
@@ -229,13 +218,10 @@ module.exports.saveToken = function* (token, client, user) {
 		userId: user.id,
 		scope: token.scope
 	};
-	 
 	db.hmset(fmt(formats.token, token.accessToken), data);
 	db.expire(fmt(formats.token, token.accessToken), client.accessTokenLifetime);
 	db.hmset(fmt(formats.token, token.refreshToken), data);
 	db.expire(fmt(formats.token, token.refreshToken), client.refreshTokenLifetime);
-	// console.log("========refreshTokenLifetime" + client.refreshTokenLifetime);
-	// console.log("========accessTokenLifetime" + client.accessTokenLifetime);
 	//Save token db
 	yield pro_saveTokenPg(token, client, user);
 	yield pro_saveReportPg(token, user);
@@ -267,11 +253,9 @@ function pro_saveTokenPg(token, client, user) {
 function checkPass(user, password){
 	return new bluebird(function (resolve, reject) {
 		bcrypt.hash(password, user.salt, undefined, (err, hash) => {
-			console.log("vvvvv");
 			if (err) { console.log('abddc'); resolve(false);}
 			else{
 				// resolve(user);
-				console.log(hash);
 				if(hash === user.password){
 					resolve(user);
 				}else resolve(false);
