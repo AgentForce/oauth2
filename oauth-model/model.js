@@ -7,7 +7,9 @@ var bluebird = require('bluebird');
 var redis = bluebird.promisifyAll(require('redis'));
  
 const redisurl = 'redis://:ManuliFe@13.250.129.169:6379';
-var db = redis.createClient(redisurl);
+var db = redis.createClient(redisurl,{
+	db: 3
+});
 var fmt = require('util').format;
 const bcrypt = require("bcrypt-nodejs");
 // const crypto = require("crypto");
