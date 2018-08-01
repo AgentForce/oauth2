@@ -82,6 +82,9 @@ AuthorizeHandler.prototype.handle = function(request, response) {
     return Promise.reject(new AccessDeniedError('Access denied: user denied access to application'));
   }
 
+  // Extend model object with request
+  this.model.request = request;
+
   var fns = [
     this.getAuthorizationCodeLifetime(),
     this.getClient(request),
@@ -97,11 +100,16 @@ AuthorizeHandler.prototype.handle = function(request, response) {
       var ResponseType;
 
       return Promise.bind(this)
-	.then(function() {
-          scope = this.getScope(request);
+        .then(function() {
+          var requestedScope = this.getScope(request);
 
-	  return this.generateAuthorizationCode(client, user, scope);
-	})
+          return this.validateScope(user, client, requestedScope);
+        })
+        .then(function(validScope) {
+          scope = validScope;
+
+          return this.generateAuthorizationCode(client, user, scope);
+        })
         .then(function(authorizationCode) {
           state = this.getState(request);
           ResponseType = this.getResponseType(request);
@@ -135,7 +143,7 @@ AuthorizeHandler.prototype.handle = function(request, response) {
 
 AuthorizeHandler.prototype.generateAuthorizationCode = function(client, user, scope) {
   if (this.model.generateAuthorizationCode) {
-    return promisify(this.model.generateAuthorizationCode).call(this.model, client, user, scope);
+    return promisify(this.model.generateAuthorizationCode, 3).call(this.model, client, user, scope);
   }
   return tokenUtil.generateRandomToken();
 };
@@ -194,6 +202,24 @@ AuthorizeHandler.prototype.getClient = function(request) {
       }
       return client;
     });
+};
+
+/**
+ * Validate requested scope.
+ */
+AuthorizeHandler.prototype.validateScope = function(user, client, scope) {
+  if (this.model.validateScope) {
+    return promisify(this.model.validateScope, 3).call(this.model, user, client, scope)
+      .then(function (scope) {
+        if (!scope) {
+          throw new InvalidScopeError('Invalid scope: Requested scope is invalid');
+        }
+
+        return scope;
+      });
+  } else {
+    return Promise.resolve(scope);
+  }
 };
 
 /**
