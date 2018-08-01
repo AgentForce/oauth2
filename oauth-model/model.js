@@ -28,7 +28,8 @@ const pgp = require('pg-promise')(initOptions);
 
 // using an invalid connection string:
 //const pg = pgp('postgres://oauth2:oauth2@localhost:5432/oauth2');
-const pg = pgp('postgres://oauth2:oauth2MNL@13.250.129.169:5432/oauth2');
+// const pg = pgp('postgres://oauth2:oauth2MNL@13.250.129.169:5432/oauth2');
+const pg = pgp('postgres://tuibghghidgwqr:17f90fa16619961aa31ee73d78bf04835f8d3b2c1c2099062ad705c4a50fb452@ec2-174-129-247-1.compute-1.amazonaws.com:5432/d3h7i5oq2p0cgb');
 
 pg.connect()
 	.then(obj => {
