@@ -19,7 +19,7 @@ app.use(async (ctx, next) => {
 
 app.use(oauthRouter(app, { 'prefix': '/oauth' }).routes());
 //app.use(apiRouter(app, { prefix: '/api' }).routes());
-
-app.listen(3002, function(){
-    console.log('oauth server listening on port 3002');
+const port = process.env.PORT || 3002;
+app.listen(port , function(){
+    console.log('oauth server listening on port ' + port);
 });
